@@ -1,0 +1,99 @@
+#!/usr/bin/env zsh
+
+# Copyright (C) 2012-2018 Dyne.org Foundation
+# 
+# Designed, written and maintained by Denis Roio <jaromil@dyne.org>
+#
+# This source  code is free  software; you can redistribute  it and/or
+# modify it under the terms of  the GNU Public License as published by
+# the Free  Software Foundation; either  version 3 of the  License, or
+# (at your option) any later version.
+#
+# This source code is distributed in  the hope that it will be useful,
+# but  WITHOUT ANY  WARRANTY;  without even  the  implied warranty  of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# Please refer to the GNU Public License for more details.
+#
+# You should have received a copy of the GNU Public License along with
+# this source code; if not, write to:
+# Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+## temporary output
+tmp="tmp.$RANDOM"
+
+# TODO: check existance of pandoc in path
+# echo "ERROR: Required program not found: pandoc"
+# echo "ERROR: Install pandoc on this system to render markdown"
+
+if [[ "$2" == "" ]]; then
+	echo "usage: markdown-tag [-w] input.html output.html"
+	return 1
+fi
+# TODO: better argument handling
+watch=0
+if [[ "$1" =~ "-w" ]]; then
+   watch=1
+   shift
+fi
+input="$1"
+output="$2"
+
+tokenize() {
+	#######################################
+	## we support the <markdown> tag inline
+
+	# parses the html and put all stuff contained in <markdown /> tags
+	# inside separate files, leaving a trace of them into the main html
+	# (a line starting with tmp.md$RAND)
+	awk 'BEGIN { srand(); markdown=0; }
+/<markdown>/ { markdown=1; out="tmp.md" rand(); print out; next }
+/<\/markdown>/ { markdown=0; next }
+{ if(markdown==1) { print $0 >out; next } else { print $0 } }
+' > $tmp
+}
+
+collate() {
+	# first pass marks the markdown parts and saves them separate
+	mds=(`find . -name 'tmp.md*'`)
+	[[ "${#mds}" = "0" ]] || {
+		# second pass substituted saved parts with rendered markdown
+		# check which markdown parser is available in PATH
+		if command -v pandoc > /dev/null; then
+			parser="pandoc -f gfm -t html5"
+
+			# parses all html and renders each markdown in the html
+			for i in $mds; do
+				md=`basename $i`
+				newtemp="tmp.$RANDOM"
+				cat $tmp | awk '
+/^'"$md"'/ { system("cat '"$md"' | '"$parser"'"); next }
+{ print $0; }' > $newtemp
+				rm $tmp; tmp=$newtemp
+			done
+		fi
+	}
+}
+
+if [[ $watch == 1 ]]; then
+	ts=""; tts=""
+	while true; do
+		ts=`stat $input | grep '^Change:'`
+		if [[ "$ts" != "$tts" ]]; then
+
+			cat $input | tokenize
+			collate
+			cat $tmp > $output
+			tts="$ts"
+		fi
+		sleep .5
+	done
+
+else
+
+	cat $input | tokenize
+	collate
+	cat $tmp > $output
+
+fi
+# clean up from temporary files
+rm -f tmp.*
