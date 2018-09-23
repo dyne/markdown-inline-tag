@@ -5,9 +5,9 @@ This is a minimalist tool to process HTML files that contain a
 
 This tool is a shell script pre-processor meant to render files before
 publication and is suitable to use inside any POSIX system including
-basic GNU or BSD implementations of tools like Grep and Awk, like
-Apple/OSX and in chocolatey Windows scripts. It will likely perform
-very well on both x86 and ARM platforms.
+basic GNU or BSD implementations providing Grep and Awk, like
+Apple/OSX and the GNU/Linux Subsystem in MS/Windows 10. It will likely
+perform very well on both x86 and ARM platforms.
 
 Markdown-inline-tag is derived from this other software
 [Webnomad](https://github.com/dyne/webnomad). Here the script is
