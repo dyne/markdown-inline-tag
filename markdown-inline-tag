@@ -18,15 +18,27 @@
 # this source code; if not, write to:
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-## temporary output
-tmp="tmp.$RANDOM"
+parser=""
 
-# TODO: check existance of pandoc in path
-# echo "ERROR: Required program not found: pandoc"
-# echo "ERROR: Install pandoc on this system to render markdown"
+# check for existance of pandoc in path
+if command -v pandoc > /dev/null; then
+	parser="pandoc -f gfm -t html5"
+else
+	echo "Required program not found: pandoc"
+	echo "Install pandoc on this system to render markdown"
+	return 1
+fi
+
+## temporary output
+TMPDIR=${TMPDIR:-/tmp}
+dtmp=`mktemp -d ${TMPDIR}/markdown-inline-tag.XXXXXXXXXX`
+[[ "$dtmp" == "" ]] && return 1
+echo "$dtmp"
+otmp=`mktemp -p $dtmp`
 
 if [[ "$2" == "" ]]; then
-	echo "usage: markdown-tag [-w] input.html output.html"
+	echo "Render HTML files with <markdown> tagged content inline"
+	echo "usage: markdown-inline-tag [-w] input.html output.html"
 	return 1
 fi
 # TODO: better argument handling
@@ -45,33 +57,33 @@ tokenize() {
 	# parses the html and put all stuff contained in <markdown /> tags
 	# inside separate files, leaving a trace of them into the main html
 	# (a line starting with tmp.md$RAND)
-	awk 'BEGIN { srand(); markdown=0; }
-/<markdown>/ { markdown=1; out="tmp.md" rand(); print out; next }
+	awk 'BEGIN { srand(); markdown=0; outfile="" }
+/<markdown>/ { markdown=1; out="tmp.md" rand(); outfile="'"${dtmp}"'/" out;
+               print out; next }
 /<\/markdown>/ { markdown=0; next }
-{ if(markdown==1) { print $0 >out; next } else { print $0 } }
-' > $tmp
+{ if(markdown==1) { print $0 >outfile; next } else { print $0 } }
+' > $otmp
 }
 
 collate() {
 	# first pass marks the markdown parts and saves them separate
-	mds=(`find . -name 'tmp.md*'`)
-	[[ "${#mds}" = "0" ]] || {
-		# second pass substituted saved parts with rendered markdown
-		# check which markdown parser is available in PATH
-		if command -v pandoc > /dev/null; then
-			parser="pandoc -f gfm -t html5"
-
-			# parses all html and renders each markdown in the html
-			for i in $mds; do
-				md=`basename $i`
-				newtemp="tmp.$RANDOM"
-				cat $tmp | awk '
-/^'"$md"'/ { system("cat '"$md"' | '"$parser"'"); next }
+	mds=(`find ${dtmp} -name 'tmp.md*'`)
+	# second pass substituted saved parts with rendered markdown
+	# parses all html and renders each markdown in the html
+	for i in $mds; do
+		md=`basename $i`
+		newtemp=`mktemp -p $dtmp`
+		cat $otmp | awk '
+/^'"$md"'/ { system("cat '"$i"' | '"$parser"'"); next }
 { print $0; }' > $newtemp
-				rm $tmp; tmp=$newtemp
-			done
-		fi
-	}
+		rm $otmp; otmp=$newtemp
+	done
+}
+
+render() {
+	cat $input | tokenize
+	collate
+	cat $otmp > $output
 }
 
 if [[ $watch == 1 ]]; then
@@ -79,21 +91,13 @@ if [[ $watch == 1 ]]; then
 	while true; do
 		ts=`stat $input | grep '^Change:'`
 		if [[ "$ts" != "$tts" ]]; then
-
-			cat $input | tokenize
-			collate
-			cat $tmp > $output
+			render
 			tts="$ts"
 		fi
 		sleep .5
 	done
-
 else
-
-	cat $input | tokenize
-	collate
-	cat $tmp > $output
-
+	render
 fi
 # clean up from temporary files
-rm -f tmp.*
+rm -rf "$dtmp"
