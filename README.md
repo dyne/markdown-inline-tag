@@ -7,7 +7,9 @@ This tool is a shell script pre-processor meant to render files before
 publication and is suitable to use inside any POSIX system including
 basic GNU or BSD implementations providing Grep and Awk, like
 Apple/OSX and the GNU/Linux Subsystem in MS/Windows 10. It will likely
-perform very well on both x86 and ARM platforms.
+perform very well on both x86 and ARM platforms, thanks to the
+adoption of [Pandoc](http://pandoc.org) and [Zsh](http://pandoc.org)
+for the implementation.
 
 Markdown-inline-tag is derived from this other software
 [Webnomad](https://github.com/dyne/webnomad). Here the script is
