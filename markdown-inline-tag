@@ -33,7 +33,6 @@ fi
 TMPDIR=${TMPDIR:-/tmp}
 dtmp=`mktemp -d ${TMPDIR}/markdown-inline-tag.XXXXXXXXXX`
 [[ "$dtmp" == "" ]] && return 1
-echo "$dtmp"
 otmp=`mktemp -p $dtmp`
 
 if [[ "$2" == "" ]]; then
