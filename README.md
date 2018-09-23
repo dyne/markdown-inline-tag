@@ -3,12 +3,16 @@
 This is a minimalist tool to process HTML files that contain a
 `<markdown>` tag, rendering their content inline inside HTML.
 
-This tool is a sort of pre-processor meant to render files before
-publication and is suitable to use inside scripts of any kind.
+This tool is a shell script pre-processor meant to render files before
+publication and is suitable to use inside any POSIX system including
+basic GNU or BSD implementations of tools like Grep and Awk, like
+Apple/OSX and in chocolatey Windows scripts. It will likely perform
+very well on both x86 and ARM platforms.
 
-Markdown-inline-tag is derived from our other software
-[Webnomad](https://github.com/dyne/webnomad) and its meant to be more
-portable inside larger setups and other web publishing software.
+Markdown-inline-tag is derived from this other software
+[Webnomad](https://github.com/dyne/webnomad). Here the script is
+published externally to be more portable inside larger setups and
+other web publishing software based on npm, yarn and similar tools.
 
 ## Requirements and portability
 
@@ -38,7 +42,7 @@ this tool does, for instance with the input file:
 	</head>
 	<body>
 		<div class="container">
-<markdown>
+			<markdown>
 # This is a Title in markdown
 
 This is a paragraph in markdown
@@ -47,7 +51,12 @@ This is a paragraph in markdown
 - Is a list
 - of items
 - in markdown
-</markdown>
+
+| This | Is  | A Table  | In Markdown |
+| ---  | --- | ---      | ---         |
+| And  | It  | Is Also  | In HTML     |
+| Once | Is  | Rendered | By Pandoc   |
+			</markdown>
 		</div>
 		<footer>This is a footer in HTML</footer>
 	</body>
@@ -72,6 +81,30 @@ Will be tranformed into:
 <li>of items</li>
 <li>in markdown</li>
 </ul>
+<table>
+<thead>
+<tr class="header">
+<th>This</th>
+<th>Is</th>
+<th>A Table</th>
+<th>In Markdown</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>And</td>
+<td>It</td>
+<td>Is Also</td>
+<td>In HTML</td>
+</tr>
+<tr class="even">
+<td>Once</td>
+<td>Is</td>
+<td>Rendered</td>
+<td>By Pandoc</td>
+</tr>
+</tbody>
+</table>
 		</div>
 		<footer>This is a footer in HTML</footer>
 	</body>
